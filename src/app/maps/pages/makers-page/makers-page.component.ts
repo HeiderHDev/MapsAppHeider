@@ -6,6 +6,11 @@ interface MarkerAndColor{
   color: string;
 }
 
+interface PlainMarker{
+  lngLat: number[];
+  color: string;
+}
+
 
 @Component({
   templateUrl: './makers-page.component.html',
@@ -30,6 +35,8 @@ export class MakersPageComponent {
       center: this.currentLngLat, // starting position [lng, lat]
       zoom: 13, // starting zoom
       });
+
+      this.readFromLocalStorage();
 
       // Marker personalizado
 
@@ -66,6 +73,10 @@ export class MakersPageComponent {
       marker,
       color
     });
+    this.saveToLocalStorage();
+
+    marker.on('dragend', () => this.saveToLocalStorage());
+    // dragend
     
   }
 
@@ -80,6 +91,30 @@ export class MakersPageComponent {
     this.map.flyTo({
       zoom: 14,
       center: marker.getLngLat(),
+    })
+  }
+
+  saveToLocalStorage(){
+    const plainMarker: PlainMarker[] = this.markers.map(({ marker, color}) => {
+      
+      return{
+        color,
+        lngLat: marker.getLngLat().toArray(),
+      }
+    });
+
+    localStorage.setItem('plainMarkers', JSON.stringify(plainMarker));
+
+  }
+
+  readFromLocalStorage(){
+    const plainMarkersString = localStorage.getItem('plainMarkers') ?? '[]';
+    const plainMarkers: PlainMarker[] = JSON.parse(plainMarkersString); //! Ojo
+
+    plainMarkers.forEach(({ color, lngLat }) => {
+      const [lng, lat] = lngLat;
+      const coords = new LngLat(lng, lat);
+      this.addMarker(coords, color);
     })
   }
 
